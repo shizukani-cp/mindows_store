@@ -1,5 +1,12 @@
 import PySimpleGUI as pg
-import csv, subprocess, shutil, shizukani, json
+import csv, subprocess, shutil, json, os
+
+def copy(src:"StrPath", dst:"StrPath"):
+    for f in os.listdir(src):
+        if os.path.isdir(f"{dst}/{f}"):
+            copy(f"{src}/{f}", f"{dst}/{f}")
+        else:
+            shutil.copy(f, f"{dst}/{f}")
 pg.set_options(font=(None, 24))
 layout = [
     [pg.Input(k="serch_word"), pg.Button("sarch", bind_return_key=True, k="serch"),],
@@ -16,7 +23,9 @@ while True:
     print(e, v)
     if e == "serch":
         #candidates = [name for _, name in apps if name in v["serch_word"]]
-        win["candidate"].update(values=[f"{name} - {user}" for user, name in apps if v["serch_word"] in f"{name} - {user}"])
+        win["candidate"].update(
+            values=[f"{name} - {user}" for user, name in apps if v["serch_word"] in f"{name} - {user}"]
+            )
         #print(v["serch_word"], candidates)
     if e == "candidate":
         for i in range(len(apps)):
@@ -28,9 +37,10 @@ while True:
             with open("_tmp/manifest.json", "r", encoding="utf-8") as f:
                 app_manifest = json.loads(f.read())
             shutil.copy("_tmp/manifest.json", f"apps/infos/{app_manifest["uuid"]}.json")
-            shutil.copytree("_tmp", "apps", dirs_exist_ok=True,
+            shutil.copytree("_tmp", "apps", dirs_exist_ok=True, copy_function=copy,
                             ignore=shutil.ignore_patterns(f"{app_manifest["uuid"]}.json"))
             for module in app_manifest["modules"]:
                 subprocess.run(f"pip install {module}")
+            shutil.rmtree("apps/_tmp")
         #apps.index(v["candidate"])
 win.close()

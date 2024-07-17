@@ -1,2 +1,4 @@
 *.spec
 *.html
+*.toc
+.mypy_cache/
